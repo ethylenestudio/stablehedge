@@ -9,8 +9,8 @@ import "./interfaces/IJOERouter.sol";
 error StableHedge__WrongPath(address requested, address correctAddress);
 
 contract StableHedge {
-    //constants integers
-    uint256 constant USDC_RATIO = 60; // dont forget to change
+    //constants integers ***dont forget to change!!!
+    uint256 constant USDC_RATIO = 60;
     uint256 constant USDTE_RATIO = 40;
 
     //constant addresses
