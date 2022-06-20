@@ -24,8 +24,11 @@ contract StableHedge {
     //immutable variables
     IJOERouter immutable router;
 
-    //mapping and structs
+    //mapping,variables and structs
     mapping(address => Holding) public allHoldings;
+    uint256 public USDC_Balance;
+    uint256 public USDT_Balance;
+    uint256 UndistributedReward;
 
     struct Holding {
         uint256 USDCHold;
@@ -77,6 +80,8 @@ contract StableHedge {
             USDCAmount[USDCAmount.length - 1];
         uint256 newUSDTHold = allHoldings[msg.sender].USDTHold +
             USDTAmount[USDTAmount.length - 1];
+        USDC_Balance = USDC_Balance + newUSDCHold;
+        USDT_Balance = USDT_Balance + newUSDTHold;
         allHoldings[msg.sender] = Holding(newUSDCHold, newUSDTHold);
     }
 
