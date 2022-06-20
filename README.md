@@ -1,3 +1,4 @@
+<img src="assets/Stable.png" width="500" margin="auto 0"/>
 Basic Tasks
 
 ```shell
