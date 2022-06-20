@@ -1,14 +1,18 @@
 const { ethers, waffle } = require("hardhat");
 const hre = require("hardhat");
-const USDC = require("./USDC.js");
+const stableAbi = require("./stableABI.js");
 
 async function main() {
   //provider and signers
   const provider = waffle.provider;
   const [deployer, testAcc] = await hre.ethers.getSigners();
   const usdcContract = await hre.ethers.getContractAt(
-    USDC,
+    stableAbi,
     "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E"
+  );
+  const usdtContract = await hre.ethers.getContractAt(
+    stableAbi,
+    "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7"
   );
 
   //deploying contract
@@ -18,24 +22,39 @@ async function main() {
   await stableHedge.deployed();
 
   console.log("Contract deployed to:", stableHedge.address);
-  const amountIn = hre.ethers.utils.parseEther("1");
-  const swapAvaxToJoe = await stableHedge.deposit(
-    hre.ethers.utils.parseUnits("100", 6),
+
+  //DEPOSIT FUNCTIONS BITCHES
+  const depositFunc = await stableHedge.deposit(
+    hre.ethers.utils.parseUnits("1", 6),
+    hre.ethers.utils.parseUnits("1", 6),
     [
       "0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7",
       "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
     ],
-    "1655957322",
-    { value: hre.ethers.utils.parseEther("200") }
+    [
+      "0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7",
+      "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
+    ],
+    "2655957322",
+    { value: hre.ethers.utils.parseEther("2") }
   );
-  await swapAvaxToJoe.wait();
+  await depositFunc.wait();
 
-  const newBalance = await usdcContract.balanceOf(stableHedge.address);
+  //CONTRACTS BALANCE
+  const newUSDCBalance = await usdcContract.balanceOf(stableHedge.address);
+  const newUSDTBalance = await usdtContract.balanceOf(stableHedge.address);
   console.log(
     `new usdc balance of the contract: ${hre.ethers.utils
-      .formatUnits(newBalance, 6)
+      .formatUnits(newUSDCBalance, 6)
       .toString()}`
   );
+  console.log(
+    `new usdt balance of the contract: ${hre.ethers.utils
+      .formatUnits(newUSDTBalance, 6)
+      .toString()}`
+  );
+
+  //USERS BALANCE BEING KEPT BY CONTRACT IN A MAPPING
   const holding = await stableHedge.allHoldings(deployer.address);
   console.log(holding);
 }

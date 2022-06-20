@@ -11,11 +11,13 @@ error StableHedge__WrongPath(address requested, address correctAddress);
 contract StableHedge {
     //constants integers ***dont forget to change!!!
     uint256 constant USDC_RATIO = 60;
-    uint256 constant USDTE_RATIO = 40;
+    uint256 constant USDT_RATIO = 40;
 
     //constant addresses
     address public constant USDC_ADDRESS =
         0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
+    address public constant USDT_ADDRESS =
+        0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7;
     address public constant WAVAX_ADDRESS =
         0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
 
@@ -37,39 +39,60 @@ contract StableHedge {
 
     function deposit(
         uint usdcOutMin,
+        uint usdtOutMin,
         address[] calldata USDCPath,
+        address[] calldata USDTPath,
         uint deadline
-    ) public payable returns (uint[] memory) {
+    ) public payable {
         require(msg.value > 0, "You can't deposit 0");
-        uint[] memory amounts = swapAvaxToStable(
+
+        if (USDCPath[USDCPath.length - 1] != USDC_ADDRESS) {
+            revert StableHedge__WrongPath(
+                USDCPath[USDCPath.length - 1],
+                USDC_ADDRESS
+            );
+        }
+        if (USDTPath[USDTPath.length - 1] != USDT_ADDRESS) {
+            revert StableHedge__WrongPath(
+                USDTPath[USDCPath.length - 1],
+                USDT_ADDRESS
+            );
+        }
+
+        uint[] memory USDCAmount = swapAvaxToStable(
             usdcOutMin,
             USDCPath,
             address(this),
-            deadline
+            deadline,
+            USDC_RATIO
         );
-        uint amountOfUSDC = amounts[amounts.length - 1];
-        uint newUSDCHold = allHoldings[msg.sender].USDCHold + amountOfUSDC;
-        allHoldings[msg.sender] = Holding(newUSDCHold, 0); //usdt is considered to be 0. reward and balance can be added to this struct
-        return amounts;
+        uint[] memory USDTAmount = swapAvaxToStable(
+            usdtOutMin,
+            USDTPath,
+            address(this),
+            deadline,
+            USDT_RATIO
+        );
+        uint newUSDCHold = allHoldings[msg.sender].USDCHold +
+            USDCAmount[USDCAmount.length - 1];
+        uint newUSDTHold = allHoldings[msg.sender].USDTHold +
+            USDTAmount[USDTAmount.length - 1];
+        allHoldings[msg.sender] = Holding(newUSDCHold, newUSDTHold);
     }
 
     function swapAvaxToStable(
         uint amountOutMin,
         address[] calldata path,
         address to,
-        uint deadline
+        uint deadline,
+        uint ratio
     ) private returns (uint[] memory) {
         if (path[0] != WAVAX_ADDRESS) {
             revert StableHedge__WrongPath(path[0], WAVAX_ADDRESS);
-        } else if (path[path.length - 1] != USDC_ADDRESS) {
-            revert StableHedge__WrongPath(path[path.length - 1], USDC_ADDRESS);
         }
-        uint[] memory amounts = router.swapExactAVAXForTokens{value: msg.value}( //SENDING ALL VALUE ATM
-            amountOutMin,
-            path,
-            to,
-            deadline
-        );
+        uint[] memory amounts = router.swapExactAVAXForTokens{
+            value: (msg.value * ratio) / 100
+        }(amountOutMin, path, to, deadline);
         return amounts;
     }
 }
