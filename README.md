@@ -12,6 +12,6 @@ npx hardhat help
 
 
 
-```
+```shell
 npm test //this will run the scripts/run.js on avalanche mainnet fork.
 ```
