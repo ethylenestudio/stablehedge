@@ -28,8 +28,8 @@ contract StableHedge {
     mapping(address => Holding) public allHoldings;
 
     struct Holding {
-        uint USDCHold;
-        uint USDTHold;
+        uint256 USDCHold;
+        uint256 USDTHold;
     }
 
     //@dev router address can be given in the parameter
@@ -38,11 +38,11 @@ contract StableHedge {
     }
 
     function deposit(
-        uint usdcOutMin,
-        uint usdtOutMin,
+        uint256 usdcOutMin,
+        uint256 usdtOutMin,
         address[] calldata USDCPath,
         address[] calldata USDTPath,
-        uint deadline
+        uint256 deadline
     ) public payable {
         require(msg.value > 0, "You can't deposit 0");
 
@@ -59,33 +59,33 @@ contract StableHedge {
             );
         }
 
-        uint[] memory USDCAmount = swapAvaxToStable(
+        uint256[] memory USDCAmount = swapAvaxToStable(
             usdcOutMin,
             USDCPath,
             address(this),
             deadline,
             USDC_RATIO
         );
-        uint[] memory USDTAmount = swapAvaxToStable(
+        uint256[] memory USDTAmount = swapAvaxToStable(
             usdtOutMin,
             USDTPath,
             address(this),
             deadline,
             USDT_RATIO
         );
-        uint newUSDCHold = allHoldings[msg.sender].USDCHold +
+        uint256 newUSDCHold = allHoldings[msg.sender].USDCHold +
             USDCAmount[USDCAmount.length - 1];
-        uint newUSDTHold = allHoldings[msg.sender].USDTHold +
+        uint256 newUSDTHold = allHoldings[msg.sender].USDTHold +
             USDTAmount[USDTAmount.length - 1];
         allHoldings[msg.sender] = Holding(newUSDCHold, newUSDTHold);
     }
 
     function swapAvaxToStable(
-        uint amountOutMin,
+        uint256 amountOutMin,
         address[] calldata path,
         address to,
-        uint deadline,
-        uint ratio
+        uint256 deadline,
+        uint256 ratio
     ) private returns (uint[] memory) {
         if (path[0] != WAVAX_ADDRESS) {
             revert StableHedge__WrongPath(path[0], WAVAX_ADDRESS);

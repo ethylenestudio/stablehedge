@@ -2,6 +2,8 @@ const { ethers, waffle } = require("hardhat");
 const hre = require("hardhat");
 const stableAbi = require("./stableABI.js");
 
+//npm test => testing in avalanche mainnet via forking
+
 async function main() {
   //provider and signers
   const provider = waffle.provider;
@@ -24,22 +26,7 @@ async function main() {
   console.log("Contract deployed to:", stableHedge.address);
 
   //DEPOSIT FUNCTIONS BITCHES
-  const depositFunc = await stableHedge.deposit(
-    hre.ethers.utils.parseUnits("1", 6),
-    hre.ethers.utils.parseUnits("1", 6),
-    [
-      "0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7",
-      "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
-    ],
-    [
-      "0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7",
-      "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
-    ],
-    "2655957322",
-    { value: hre.ethers.utils.parseEther("2") }
-  );
-  await depositFunc.wait();
-
+  await depositFunc(stableHedge, "1", "3");
   //CONTRACTS BALANCE
   const newUSDCBalance = await usdcContract.balanceOf(stableHedge.address);
   const newUSDTBalance = await usdtContract.balanceOf(stableHedge.address);
@@ -55,8 +42,16 @@ async function main() {
   );
 
   //USERS BALANCE BEING KEPT BY CONTRACT IN A MAPPING
-  const holding = await stableHedge.allHoldings(deployer.address);
-  console.log(holding);
+  await stableHedge
+    .allHoldings(deployer.address)
+    .then((resp) => console.log("first deposit: ", resp));
+
+  //deposit and check balance again.
+  await depositFunc(stableHedge, "1", "1");
+
+  await stableHedge
+    .allHoldings(deployer.address)
+    .then((resp) => console.log("second deposit: ", resp));
 }
 
 main()
@@ -66,4 +61,21 @@ main()
     process.exit(1);
   });
 
-//npm test => testing in avalanche mainnet via forking
+//deposit function
+const depositFunc = async (contract, amountMin, depositAmount) => {
+  const txn = await contract.deposit(
+    hre.ethers.utils.parseUnits(amountMin, 6),
+    hre.ethers.utils.parseUnits(amountMin, 6),
+    [
+      "0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7",
+      "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+    ],
+    [
+      "0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7",
+      "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
+    ],
+    "2655957322",
+    { value: hre.ethers.utils.parseEther(depositAmount) }
+  );
+  await txn.wait();
+};
