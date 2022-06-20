@@ -5,18 +5,24 @@ import "hardhat/console.sol";
 import "./interfaces/IJOERouter.sol";
 
 //joe router contract: 0x60aE616a2155Ee3d9A68541Ba4544862310933d4
-//wavax address: 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7
-//usdc address: 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E
 
 error StableHedge__WrongPath(address requested, address correctAddress);
 
 contract StableHedge {
+    //constants integers
     uint256 constant USDC_RATIO = 60; // dont forget to change
     uint256 constant USDTE_RATIO = 40;
-    address constant USDC_ADDRESS = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E; //will be given as constructor param in the prod
-    address constant WAVAX_ADDRESS = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7; //will be given as constructor param in the prod
+
+    //constant addresses
+    address public constant USDC_ADDRESS =
+        0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
+    address public constant WAVAX_ADDRESS =
+        0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
+
+    //immutable variables
     IJOERouter immutable router;
 
+    //mapping and structs
     mapping(address => Holding) public allHoldings;
 
     struct Holding {
@@ -24,8 +30,9 @@ contract StableHedge {
         uint USDTHold;
     }
 
+    //@dev router address can be given in the parameter
     constructor() {
-        router = IJOERouter(0x60aE616a2155Ee3d9A68541Ba4544862310933d4); //will be given as constructor param in the prod
+        router = IJOERouter(0x60aE616a2155Ee3d9A68541Ba4544862310933d4);
     }
 
     function deposit(

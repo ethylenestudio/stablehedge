@@ -20,13 +20,13 @@ async function main() {
   console.log("Contract deployed to:", stableHedge.address);
   const amountIn = hre.ethers.utils.parseEther("1");
   const swapAvaxToJoe = await stableHedge.deposit(
-    hre.ethers.utils.parseUnits("1", 6),
+    hre.ethers.utils.parseUnits("100", 6),
     [
       "0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7",
       "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
     ],
     "1655957322",
-    { value: hre.ethers.utils.parseEther("2") }
+    { value: hre.ethers.utils.parseEther("200") }
   );
   await swapAvaxToJoe.wait();
 
