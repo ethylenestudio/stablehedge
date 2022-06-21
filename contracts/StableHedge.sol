@@ -1,12 +1,11 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
 import "./interfaces/IJOERouter.sol";
 
 //joe router contract: 0x60aE616a2155Ee3d9A68541Ba4544862310933d4
 
-error StableHedge__WrongPath(address requested, address correctAddress);
+error StableHedge__WrongPath(address[] wrongPath);
 
 contract StableHedge {
     //constants integers ***dont forget to change!!!
@@ -18,8 +17,6 @@ contract StableHedge {
         0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
     address public constant USDT_ADDRESS =
         0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7;
-    address public constant WAVAX_ADDRESS =
-        0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
 
     //immutable variables
     IJOERouter immutable router;
@@ -49,17 +46,17 @@ contract StableHedge {
     ) public payable {
         require(msg.value > 0, "You can't deposit 0");
 
-        if (USDCPath[USDCPath.length - 1] != USDC_ADDRESS) {
-            revert StableHedge__WrongPath(
-                USDCPath[USDCPath.length - 1],
-                USDC_ADDRESS
-            );
+        if (
+            USDCPath[0] != router.WAVAX() ||
+            USDCPath[USDCPath.length - 1] != USDC_ADDRESS
+        ) {
+            revert StableHedge__WrongPath(USDCPath);
         }
-        if (USDTPath[USDTPath.length - 1] != USDT_ADDRESS) {
-            revert StableHedge__WrongPath(
-                USDTPath[USDCPath.length - 1],
-                USDT_ADDRESS
-            );
+        if (
+            USDTPath[0] != router.WAVAX() ||
+            USDTPath[USDTPath.length - 1] != USDT_ADDRESS
+        ) {
+            revert StableHedge__WrongPath(USDTPath);
         }
 
         uint256[] memory USDCAmount = swapAvaxToStable(
@@ -91,11 +88,11 @@ contract StableHedge {
         address to,
         uint256 deadline,
         uint256 ratio
-    ) private returns (uint[] memory) {
-        if (path[0] != WAVAX_ADDRESS) {
-            revert StableHedge__WrongPath(path[0], WAVAX_ADDRESS);
+    ) private returns (uint256[] memory) {
+        if (path[0] != router.WAVAX()) {
+            revert StableHedge__WrongPath(path);
         }
-        uint[] memory amounts = router.swapExactAVAXForTokens{
+        uint256[] memory amounts = router.swapExactAVAXForTokens{
             value: (msg.value * ratio) / 100
         }(amountOutMin, path, to, deadline);
         return amounts;
