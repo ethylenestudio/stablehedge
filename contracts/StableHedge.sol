@@ -52,6 +52,7 @@ contract StableHedge {
         ) {
             revert StableHedge__WrongPath(USDCPath);
         }
+
         if (
             USDTPath[0] != router.WAVAX() ||
             USDTPath[USDTPath.length - 1] != USDT_ADDRESS
@@ -66,6 +67,7 @@ contract StableHedge {
             deadline,
             USDC_RATIO
         );
+
         uint256[] memory USDTAmount = swapAvaxToStable(
             usdtOutMin,
             USDTPath,
@@ -73,13 +75,12 @@ contract StableHedge {
             deadline,
             USDT_RATIO
         );
-        uint256 newUSDCHold = allHoldings[msg.sender].USDCHold +
-            USDCAmount[USDCAmount.length - 1];
-        uint256 newUSDTHold = allHoldings[msg.sender].USDTHold +
-            USDTAmount[USDTAmount.length - 1];
-        USDC_Balance = USDC_Balance + newUSDCHold;
-        USDT_Balance = USDT_Balance + newUSDTHold;
-        allHoldings[msg.sender] = Holding(newUSDCHold, newUSDTHold);
+
+        USDC_Balance += USDCAmount[USDCAmount.length - 1];
+        allHoldings[msg.sender].USDCHold += USDCAmount[USDCAmount.length - 1];
+
+        USDT_Balance += USDTAmount[USDTAmount.length - 1];
+        allHoldings[msg.sender].USDTHold += USDTAmount[USDTAmount.length - 1];
     }
 
     function swapAvaxToStable(
