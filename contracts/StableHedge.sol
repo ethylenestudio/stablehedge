@@ -37,6 +37,10 @@ contract StableHedge {
         router = IJOERouter(0x60aE616a2155Ee3d9A68541Ba4544862310933d4);
     }
 
+    receive() external payable {}
+
+    fallback() external payable {}
+
     function deposit(
         uint256 usdcOutMin,
         uint256 usdtOutMin,
