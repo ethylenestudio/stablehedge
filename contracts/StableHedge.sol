@@ -12,7 +12,6 @@ error StableHedge__WrongPath(address[] wrongPath);
 contract StableHedge {
     //constants integers ***dont forget to change!!!
     uint256 constant USDC_RATIO = 60;
-    uint256 constant USDT_RATIO = 40;
 
     //constant addresses
     address public constant USDC_ADDRESS =
@@ -75,7 +74,7 @@ contract StableHedge {
             USDCPath,
             address(this),
             deadline,
-            USDC_RATIO
+            ((msg.value * USDC_RATIO) / 100)
         );
 
         uint256[] memory USDTAmount = swapAvaxToStable(
@@ -83,7 +82,7 @@ contract StableHedge {
             USDTPath,
             address(this),
             deadline,
-            USDT_RATIO
+            (msg.value - ((msg.value * USDC_RATIO) / 100))
         );
 
         USDC_Balance += USDCAmount[USDCAmount.length - 1];
@@ -91,6 +90,8 @@ contract StableHedge {
 
         USDT_Balance += USDTAmount[USDTAmount.length - 1];
         allHoldings[msg.sender].USDTHold += USDTAmount[USDTAmount.length - 1];
+
+        depositToAave(USDC_ADDRESS, USDCAmount[USDCAmount.length - 1]);
     }
 
     function swapAvaxToStable(
@@ -103,9 +104,21 @@ contract StableHedge {
         if (path[0] != router.WAVAX()) {
             revert StableHedge__WrongPath(path);
         }
-        uint256[] memory amounts = router.swapExactAVAXForTokens{
-            value: (msg.value * ratio) / 100
-        }(amountOutMin, path, to, deadline);
+        uint256[] memory amounts = router.swapExactAVAXForTokens{value: ratio}(
+            amountOutMin,
+            path,
+            to,
+            deadline
+        );
         return amounts;
     }
+
+    function depositToAave(address asset, uint256 amount) private {
+        usdcContract.approve(
+            0x794a61358D6845594F94dc1DB02A252b5b4814aD,
+            amount
+        );
+        aave.supply(asset, amount, address(this), 0);
+    }
+
 }
