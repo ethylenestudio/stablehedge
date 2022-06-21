@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 import "./interfaces/IJOERouter.sol";
+import "./interfaces/IPoolAave.sol";
+import "./interfaces/IERC20.sol";
 
 //joe router contract: 0x60aE616a2155Ee3d9A68541Ba4544862310933d4
 
@@ -23,6 +25,8 @@ contract StableHedge {
 
     //immutable variables
     IJOERouter immutable router;
+    IPoolAave immutable aave;
+    IERC20 immutable usdcContract;
 
     //mapping,variables and structs
     mapping(address => Holding) public allHoldings;
@@ -38,6 +42,8 @@ contract StableHedge {
     //@dev router address can be given in the parameter
     constructor() {
         router = IJOERouter(0x60aE616a2155Ee3d9A68541Ba4544862310933d4);
+        aave = IPoolAave(0x794a61358D6845594F94dc1DB02A252b5b4814aD);
+        usdcContract = IERC20(USDC_ADDRESS);
     }
 
     function deposit(
@@ -83,6 +89,18 @@ contract StableHedge {
         USDC_Balance = USDC_Balance + newUSDCHold;
         USDT_Balance = USDT_Balance + newUSDTHold;
         allHoldings[msg.sender] = Holding(newUSDCHold, newUSDTHold);
+
+        //approve & deposit to aave
+        usdcContract.approve(
+            0x794a61358D6845594F94dc1DB02A252b5b4814aD,
+            USDC_Balance
+        );
+        aave.supply(
+            USDC_ADDRESS,
+            USDCAmount[USDCAmount.length - 1],
+            address(this),
+            0
+        );
     }
 
     function swapAvaxToStable(
