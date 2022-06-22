@@ -8,6 +8,7 @@ import "./interfaces/IPoolPlatypus.sol";
 
 //joe router contract: 0x60aE616a2155Ee3d9A68541Ba4544862310933d4
 
+//ulaş bunları require'a çevirme nolur
 error StableHedge__WrongPath(address[] wrongPath);
 
 contract StableHedge {
