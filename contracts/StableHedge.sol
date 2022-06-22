@@ -5,6 +5,7 @@ import "./interfaces/IJOERouter.sol";
 import "./interfaces/IPoolAave.sol";
 import "./interfaces/IERC20.sol";
 import "./interfaces/IPoolPlatypus.sol";
+import "./interfaces/IStakePlatypus.sol";
 
 //joe router contract: 0x60aE616a2155Ee3d9A68541Ba4544862310933d4
 
@@ -26,8 +27,10 @@ contract StableHedge {
     IJOERouter immutable router;
     IPoolAave immutable aave;
     IPoolPlatypus immutable ptp;
+    IStakePlatypus immutable ptpStake;
     IERC20 immutable usdcContract;
     IERC20 immutable usdtContract;
+    IERC20 immutable ptpUsdtLPContract;
 
     //mapping,variables and structs
     mapping(address => Holding) public allHoldings;
@@ -46,13 +49,17 @@ contract StableHedge {
         router = IJOERouter(0x60aE616a2155Ee3d9A68541Ba4544862310933d4);
         aave = IPoolAave(0x794a61358D6845594F94dc1DB02A252b5b4814aD);
         ptp = IPoolPlatypus(0x66357dCaCe80431aee0A7507e2E361B7e2402370);
+        ptpStake = IStakePlatypus(0x68c5f4374228BEEdFa078e77b5ed93C28a2f713E);
         usdcContract = IERC20(USDC_ADDRESS);
         usdtContract = IERC20(USDT_ADDRESS);
+        ptpUsdtLPContract = IERC20(0x0D26D103c91F63052Fbca88aAF01d5304Ae40015);
     }
 
     receive() external payable {}
 
     fallback() external payable {}
+
+    //DEPOSIT TO PLATFORM
 
     function deposit(
         uint256 usdcOutMin,
@@ -93,15 +100,17 @@ contract StableHedge {
             (msg.value - ((msg.value * USDC_RATIO) / 100))
         );
 
+        depositToAave(USDC_ADDRESS, USDCAmount[USDCAmount.length - 1]);
+        depositToPtp(USDTAmount[USDTAmount.length - 1], deadline);
+
         USDC_Balance += USDCAmount[USDCAmount.length - 1];
         allHoldings[msg.sender].USDCHold += USDCAmount[USDCAmount.length - 1];
 
         USDT_Balance += USDTAmount[USDTAmount.length - 1];
         allHoldings[msg.sender].USDTHold += USDTAmount[USDTAmount.length - 1];
-
-        depositToAave(USDC_ADDRESS, USDCAmount[USDCAmount.length - 1]);
-        depositToPtp(USDTAmount[USDTAmount.length - 1], deadline);
     }
+
+    //SWAP FUNCTIONS
 
     function swapAvaxToStable(
         uint256 amountOutMin,
@@ -122,6 +131,8 @@ contract StableHedge {
         return amounts;
     }
 
+    //DEPOSIT TO STRATEGIES
+
     function depositToAave(address asset, uint256 amount) private {
         usdcContract.approve(
             0x794a61358D6845594F94dc1DB02A252b5b4814aD,
@@ -139,15 +150,26 @@ contract StableHedge {
             0x66357dCaCe80431aee0A7507e2E361B7e2402370,
             amount
         );
+        ptpUsdtLPContract.approve(
+            0x68c5f4374228BEEdFa078e77b5ed93C28a2f713E,
+            amount
+        );
         uint256 liquidity = ptp.deposit(
             USDT_ADDRESS,
             amount,
             address(this),
             deadline
         );
+        ptpStake.deposit(0, liquidity);
         allHoldings[msg.sender].USDTLPAmount += liquidity;
         return liquidity;
     }
+
+    //CLAIM REWARDS
+
+
+
+    //WITHDRAW
 
     function withdrawFromPtp(uint256 deadline) public {
         if (allHoldings[msg.sender].USDTLPAmount == 0) {
