@@ -10,6 +10,7 @@ import "./interfaces/IPoolPlatypus.sol";
 
 //ulaş bunları require'a çevirme nolur
 error StableHedge__WrongPath(address[] wrongPath);
+error StableHedge__NotEnoughBalance();
 
 contract StableHedge {
     //constants integers ***dont forget to change!!!
@@ -37,6 +38,7 @@ contract StableHedge {
     struct Holding {
         uint256 USDCHold;
         uint256 USDTHold;
+        uint256 USDTLPAmount;
     }
 
     //@dev router address can be given in the parameter
@@ -128,11 +130,37 @@ contract StableHedge {
         aave.supply(asset, amount, address(this), 0);
     }
 
-    function depositToPtp(uint256 amount, uint256 deadline) private {
+    function depositToPtp(uint256 amount, uint256 deadline)
+        private
+        returns (uint256)
+    {
+        allHoldings[msg.sender].USDTHold = 0;
         usdtContract.approve(
             0x66357dCaCe80431aee0A7507e2E361B7e2402370,
             amount
         );
-        ptp.deposit(USDT_ADDRESS, amount, address(this), deadline);
+        uint256 liquidity = ptp.deposit(
+            USDT_ADDRESS,
+            amount,
+            address(this),
+            deadline
+        );
+        allHoldings[msg.sender].USDTLPAmount += liquidity;
+        return liquidity;
+    }
+
+    function withdrawFromPtp(uint256 deadline) public {
+        if (allHoldings[msg.sender].USDTLPAmount == 0) {
+            revert StableHedge__NotEnoughBalance();
+        }
+        allHoldings[msg.sender].USDTLPAmount = 0;
+        uint256 amount = ptp.withdraw(
+            USDT_ADDRESS,
+            allHoldings[msg.sender].USDTLPAmount,
+            (allHoldings[msg.sender].USDTLPAmount * 998) / 1000,
+            address(this),
+            deadline
+        );
+        allHoldings[msg.sender].USDTHold += amount;
     }
 }

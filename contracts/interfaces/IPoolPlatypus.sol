@@ -9,4 +9,12 @@ interface IPoolPlatypus {
         address to,
         uint256 deadline
     ) external returns (uint256 liquidity);
+
+    function withdraw(
+        address token,
+        uint256 liquidity,
+        uint256 minimumAmount,
+        address to,
+        uint256 deadline
+    ) external returns (uint256 amount);
 }
