@@ -14,7 +14,7 @@ async function main() {
   );
   const usdtContract = await hre.ethers.getContractAt(
     stableAbi,
-    "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7"
+    "0xc7198437980c041c805A1EDcbA50c1Ce5db95118"
   );
 
   //deploying contract
@@ -72,7 +72,7 @@ const depositFunc = async (contract, amountMin, depositAmount) => {
     ],
     [
       "0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7",
-      "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
+      "0xc7198437980c041c805A1EDcbA50c1Ce5db95118",
     ],
     "2655957322",
     { value: hre.ethers.utils.parseEther(depositAmount) }

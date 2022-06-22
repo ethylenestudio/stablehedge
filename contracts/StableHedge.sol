@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "./interfaces/IJOERouter.sol";
 import "./interfaces/IPoolAave.sol";
 import "./interfaces/IERC20.sol";
+import "./interfaces/IPoolPlatypus.sol";
 
 //joe router contract: 0x60aE616a2155Ee3d9A68541Ba4544862310933d4
 
@@ -17,12 +18,14 @@ contract StableHedge {
     address public constant USDC_ADDRESS =
         0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
     address public constant USDT_ADDRESS =
-        0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7;
+        0xc7198437980c041c805A1EDcbA50c1Ce5db95118;
 
     //immutable variables
     IJOERouter immutable router;
     IPoolAave immutable aave;
+    IPoolPlatypus immutable ptp;
     IERC20 immutable usdcContract;
+    IERC20 immutable usdtContract;
 
     //mapping,variables and structs
     mapping(address => Holding) public allHoldings;
@@ -39,7 +42,9 @@ contract StableHedge {
     constructor() {
         router = IJOERouter(0x60aE616a2155Ee3d9A68541Ba4544862310933d4);
         aave = IPoolAave(0x794a61358D6845594F94dc1DB02A252b5b4814aD);
+        ptp = IPoolPlatypus(0x66357dCaCe80431aee0A7507e2E361B7e2402370);
         usdcContract = IERC20(USDC_ADDRESS);
+        usdtContract = IERC20(USDT_ADDRESS);
     }
 
     receive() external payable {}
@@ -92,6 +97,7 @@ contract StableHedge {
         allHoldings[msg.sender].USDTHold += USDTAmount[USDTAmount.length - 1];
 
         depositToAave(USDC_ADDRESS, USDCAmount[USDCAmount.length - 1]);
+        depositToPtp(USDTAmount[USDTAmount.length - 1], deadline);
     }
 
     function swapAvaxToStable(
@@ -121,4 +127,11 @@ contract StableHedge {
         aave.supply(asset, amount, address(this), 0);
     }
 
+    function depositToPtp(uint256 amount, uint256 deadline) private {
+        usdtContract.approve(
+            0x66357dCaCe80431aee0A7507e2E361B7e2402370,
+            amount
+        );
+        ptp.deposit(USDT_ADDRESS, amount, address(this), deadline);
+    }
 }
