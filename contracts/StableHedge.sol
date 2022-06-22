@@ -6,10 +6,10 @@ import "./interfaces/IPoolAave.sol";
 import "./interfaces/IERC20.sol";
 import "./interfaces/IPoolPlatypus.sol";
 import "./interfaces/IStakePlatypus.sol";
+import "./interfaces/IAaveRewards.sol";
 
 //joe router contract: 0x60aE616a2155Ee3d9A68541Ba4544862310933d4
 
-//ulaş bunları require'a çevirme nolur
 error StableHedge__WrongPath(address[] wrongPath);
 error StableHedge__NotEnoughBalance();
 
@@ -22,12 +22,14 @@ contract StableHedge {
         0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
     address public constant USDT_ADDRESS =
         0xc7198437980c041c805A1EDcbA50c1Ce5db95118;
+    address[] aaveRewardsArray = [0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7];
 
     //immutable variables
     IJOERouter immutable router;
     IPoolAave immutable aave;
     IPoolPlatypus immutable ptp;
     IStakePlatypus immutable ptpStake;
+    IAaveRewards immutable aaveRewards;
     IERC20 immutable usdcContract;
     IERC20 immutable usdtContract;
     IERC20 immutable ptpUsdtLPContract;
@@ -53,6 +55,7 @@ contract StableHedge {
         usdcContract = IERC20(USDC_ADDRESS);
         usdtContract = IERC20(USDT_ADDRESS);
         ptpUsdtLPContract = IERC20(0x0D26D103c91F63052Fbca88aAF01d5304Ae40015);
+        aaveRewards = IAaveRewards(0x929EC64c34a17401F460460D4B9390518E5B473e);
     }
 
     receive() external payable {}
@@ -100,14 +103,13 @@ contract StableHedge {
             (msg.value - ((msg.value * USDC_RATIO) / 100))
         );
 
-        depositToAave(USDC_ADDRESS, USDCAmount[USDCAmount.length - 1]);
-        depositToPtp(USDTAmount[USDTAmount.length - 1], deadline);
-
         USDC_Balance += USDCAmount[USDCAmount.length - 1];
         allHoldings[msg.sender].USDCHold += USDCAmount[USDCAmount.length - 1];
 
         USDT_Balance += USDTAmount[USDTAmount.length - 1];
         allHoldings[msg.sender].USDTHold += USDTAmount[USDTAmount.length - 1];
+        depositToAave(USDC_ADDRESS, USDCAmount[USDCAmount.length - 1]);
+        depositToPtp(USDTAmount[USDTAmount.length - 1], deadline);
     }
 
     //SWAP FUNCTIONS
@@ -166,8 +168,9 @@ contract StableHedge {
     }
 
     //CLAIM REWARDS
-
-
+    function claimAaveRewards() public {
+        aaveRewards.claimAllRewards(aaveRewardsArray, address(this));
+    }
 
     //WITHDRAW
 

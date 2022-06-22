@@ -28,6 +28,7 @@ async function main() {
   //DEPOSIT FUNCTIONS BITCHES
   await depositFunc(stableHedge, "1", "3");
   //CONTRACTS BALANCE
+
   const newUSDCBalance = await usdcContract.balanceOf(stableHedge.address);
   const newUSDTBalance = await usdtContract.balanceOf(stableHedge.address);
   console.log(
@@ -52,6 +53,12 @@ async function main() {
   await stableHedge
     .allHoldings(deployer.address)
     .then((resp) => console.log("second deposit: ", resp));
+
+  const claimAave = await stableHedge.claimAaveRewards();
+  await claimAave.wait();
+  await provider
+    .getBalance(stableHedge.address)
+    .then((resp) => console.log(resp));
 }
 
 main()
